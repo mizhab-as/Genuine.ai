@@ -200,9 +200,10 @@ export default function App() {
         formData.append('preset_id', presetId);
       }
 
-      const endpoint = activeMode === 'face' 
-        ? `${API_BASE_URL}/api/v1/analyze-face` 
-        : `${API_BASE_URL}/api/v1/analyze`;
+      let endpoint = `${API_BASE_URL}/api/v1/analyze`;
+      if (activeMode === 'face') endpoint = `${API_BASE_URL}/api/v1/analyze-face`;
+      if (activeMode === 'doc') endpoint = `${API_BASE_URL}/api/v1/analyze-document`;
+      if (activeMode === 'video') endpoint = `${API_BASE_URL}/api/v1/analyze-video`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -375,16 +376,31 @@ export default function App() {
                 }`}
               >
                 <User className="h-4 w-4 text-purple-400" />
-                <span>Face Check (Phase 2 Preview)</span>
+                <span>Face Check (Phase 2)</span>
               </button>
 
               <button
-                onClick={() => setActiveTab('roadmap')}
-                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-2 border bg-slate-900/40 text-slate-400 border-dashed border-white/15 hover:text-slate-200 hover:border-white/30"
+                onClick={() => setActiveMode('doc')}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-2 border transition-all ${
+                  activeMode === 'doc'
+                    ? 'bg-gradient-to-r from-indigo-600 to-emerald-600 text-white border-emerald-400/40 shadow-lg shadow-emerald-500/25'
+                    : 'bg-slate-900/70 text-slate-400 border-white/10 hover:border-white/20'
+                }`}
               >
-                <FileCheck className="h-4 w-4 text-slate-400" />
-                <span>Document & Video Check (Phases 3-4)</span>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+                <FileCheck className="h-4 w-4 text-emerald-400" />
+                <span>Document & Signatures (Phase 3)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveMode('video')}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-2 border transition-all ${
+                  activeMode === 'video'
+                    ? 'bg-gradient-to-r from-indigo-600 to-pink-600 text-white border-pink-400/40 shadow-lg shadow-pink-500/25'
+                    : 'bg-slate-900/70 text-slate-400 border-white/10 hover:border-white/20'
+                }`}
+              >
+                <Video className="h-4 w-4 text-pink-400" />
+                <span>Video Check (Phase 4)</span>
               </button>
             </div>
 
