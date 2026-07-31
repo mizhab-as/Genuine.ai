@@ -1,12 +1,12 @@
 import React from 'react';
-import { Clock, CheckCircle, AlertTriangle, Trash2 } from 'lucide-react';
+import { Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function AnalysisHistory() {
-  const { history, setResult, showToast } = useApp();
+  const { history, showToast } = useApp();
 
-  const clearHistory = () => {
-    // We can't mutate directly, so we use the context setter
+  const _clearHistory = () => {
+    // Reserved: use context setter when wiring up a clear button
     showToast('History cleared', 'info');
   };
 

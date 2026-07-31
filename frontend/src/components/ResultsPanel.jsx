@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, AlertTriangle, Info, User, Video, Copy, ChevronRight } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Info, User, Video, Copy } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import HeatmapViewer from './HeatmapViewer';
 import MetricBar from './MetricBar';
@@ -30,7 +30,7 @@ const FREQ_LABELS = {
 };
 
 export default function ResultsPanel() {
-  const { result, preview, copySnippet } = useApp();
+  const { result, copySnippet } = useApp();
 
   if (!result) return null;
 

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { UploadCloud, RefreshCw, Zap, AlertTriangle, BarChart2 } from 'lucide-react';
+import { UploadCloud, RefreshCw, Zap, BarChart2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function BatchUpload() {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Code, ExternalLink, Copy } from 'lucide-react';
+import { ExternalLink, Copy } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function ApiTab() {

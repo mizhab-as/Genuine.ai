@@ -8,7 +8,7 @@ import React from 'react';
  *   color  - CSS color string
  *   invert - if true, high value = good (green direction)
  */
-export default function MetricBar({ label, value, color, invert = false }) {
+export default function MetricBar({ label, value, color, _invert = false }) {
   const displayVal = typeof value === 'number' ? value.toFixed(3) : value;
   const pct        = Math.round((typeof value === 'number' ? value : 0) * 100);
 
