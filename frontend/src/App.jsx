@@ -1,7 +1,8 @@
 /**
  * Genuine.ai — Root Application Shell
- * Thin orchestrator: imports components, wires up layout, renders tabs.
- * All state lives in AppContext. All logic lives in useAnalysis.
+ * Design system updated from genuine_ai_landing.html:
+ * Archivo + Inter + IBM Plex Mono fonts, Warm Cream (#f3ede0) canvas,
+ * Deep Forest (#2f4d46) and Ink (#1c2420) structural containers.
  */
 
 import React from 'react';
@@ -33,12 +34,13 @@ import AboutModal        from './components/AboutModal';
 import { Eye } from 'lucide-react';
 function EmptyState() {
   return (
-    <div className="card empty-state" style={{ minHeight: 440 }}>
-      <div className="empty-icon"><Eye size={28} color="#6366f1" /></div>
-      <p className="empty-title">Ready for Verification</p>
-      <p className="empty-sub">
-        Upload an image or click a preset sample to start authenticity analysis
-        with Grad-CAM++ visual proof and DCT frequency signature detection.
+    <div className="card empty-state" style={{ minHeight: 440, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--forest)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+        <Eye size={26} color="var(--cream)" />
+      </div>
+      <p style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink)', marginBottom: 6 }}>Ready for Verification</p>
+      <p style={{ color: 'var(--text-dim)', fontSize: 13.5, maxWidth: 360, lineHeight: 1.6 }}>
+        Upload an image or click a preset sample to start authenticity analysis with Grad-CAM++ visual proof and DCT frequency artifact detection.
       </p>
     </div>
   );
@@ -49,7 +51,7 @@ function DetectorTab() {
   const { analyzing, result, progress } = useApp();
 
   return (
-    <div className="container page-content">
+    <div className="container page-content" style={{ padding: '32px 0 60px' }}>
       <HeroSection />
       <ModeTabs />
 
@@ -90,14 +92,15 @@ function AppShell() {
       {tab === 'api'      && <ApiTab />}
       {tab === 'docs'     && <DocsTab />}
 
+      {/* Footer from genuine_ai_landing.html */}
       <footer className="footer">
         <div className="footer-inner">
-          <div className="footer-brand">
-            <span className="footer-brand-name">Genuine<span>.ai</span></span>
-            <span className="footer-tagline">— Know what's real.</span>
+          <div>
+            <span className="footer-brand-name">GENUINE<span>.AI</span></span>
+            <span className="footer-tagline">— PIXEL-LEVEL PROOF</span>
           </div>
           <p className="footer-right">
-            CIFAKE CNN + Grad-CAM++ + DCT Analysis · Bird & Lotfi, IEEE Access 2024 · FastAPI v1.1 · PyTorch 2
+            CIFAKE CNN + GRAD-CAM++ + DCT · IEEE ACCESS 2024 · FASTAPI v1.1
           </p>
         </div>
       </footer>

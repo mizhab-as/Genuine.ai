@@ -1,5 +1,4 @@
 import React from 'react';
-import { ShieldCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const TABS = [
@@ -14,13 +13,19 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <div className="navbar-inner">
-        {/* Brand */}
+        {/* Brand from genuine_ai_landing.html */}
         <div className="brand" onClick={() => setTab('detector')}>
-          <div className="brand-icon">
-            <ShieldCheck size={18} color="#fff" />
+          <div className="brand-mark">
+            <svg viewBox="0 0 30 30" fill="none" width="30" height="30">
+              <rect x="2" y="2" width="26" height="26" rx="7" stroke="#1c2420" strokeWidth="1.8"/>
+              <circle cx="15" cy="15" r="6" stroke="#1c2420" strokeWidth="1.8"/>
+              <path d="M19.5 19.5L24 24" stroke="#4fae8a" strokeWidth="2.2" strokeLinecap="round"/>
+            </svg>
           </div>
-          <span className="brand-name">Genuine<span>.ai</span></span>
-          <span className="badge-pill">BETA</span>
+          <div>
+            <div className="brand-name">GENUINE.AI</div>
+            <div className="brand-sub">PIXEL-LEVEL PROOF</div>
+          </div>
         </div>
 
         {/* Nav tabs */}
@@ -42,12 +47,18 @@ export default function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div className="status-pill">
             <span className={`status-dot ${apiOnline ? 'online' : 'ready'}`} />
-            <span>{apiOnline ? 'API Online' : 'Engine Ready'}</span>
+            <span>{apiOnline ? 'API ONLINE' : 'ENGINE READY'}</span>
           </div>
           <button
             className="btn-about"
             onClick={() => setAboutOpen(true)}
             title="About Genuine.ai"
+            style={{
+              width: 28, height: 28, borderRadius: '50%',
+              background: 'var(--ink)', color: 'var(--cream)',
+              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
           >
             ?
           </button>

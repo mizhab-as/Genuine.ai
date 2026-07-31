@@ -16,52 +16,47 @@ export default function ApiTab() {
 
   return (
     <div className="container page-content">
-      <div className="api-hero">
-        <h2 className="api-title" style={{ fontFamily: 'var(--font-display)' }}>
-          REST API{' '}
-          <span style={{ background: 'linear-gradient(135deg,#22d3ee,#6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Reference
-          </span>
+      {/* Hero from genuine_ai_landing.html */}
+      <div style={{ textAlign: 'center', marginBottom: 36 }}>
+        <div className="section-eyebrow">DEVELOPER REST API</div>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 900, color: 'var(--forest)', margin: '10px 0' }}>
+          Ship detection in two lines of code
         </h2>
-        <p className="api-sub">
+        <p style={{ color: 'var(--text-dim)', fontSize: 15, maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
           Integrate Genuine.ai into any pipeline — newsrooms, trust & safety, mobile apps.
-          All endpoints return <code className="mono">request_id</code> for tracing.
+          All endpoints return <code className="mono">request_id</code> for distributed tracing.
         </p>
       </div>
 
-      <div className="api-card" style={{ maxWidth: 840, margin: '0 auto' }}>
+      <div className="card" style={{ maxWidth: 840, margin: '0 auto' }}>
         {/* Endpoint 1 */}
-        <div className="endpoint-header">
+        <div className="endpoint-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 16, borderBottom: '1px solid rgba(28,36,32,0.1)', marginBottom: 20 }}>
           <div>
-            <p className="endpoint-label">POST /api/v1/analyze</p>
-            <p className="endpoint-title">Single Image — CNN + DCT Fusion Detection</p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'var(--teal)' }}>POST /api/v1/analyze</p>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, color: 'var(--ink)' }}>Single Image — CNN + DCT Fusion Detection</p>
           </div>
-          <a href={`${API_BASE_URL}/docs`} target="_blank" rel="noreferrer" className="btn-docs">
-            Swagger Docs <ExternalLink size={13} />
+          <a href={`${API_BASE_URL}/docs`} target="_blank" rel="noreferrer" className="btn-browse" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            Swagger Docs <ExternalLink size={12} />
           </a>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
-            <div className="code-block-header">
-              <span className="code-block-label">cURL</span>
-              <button className="btn-copy" onClick={() => copySnippet(curlSnippet)}>
-                <Copy size={11} /> {copied ? 'Copied!' : 'Copy'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>cURL COMMAND</span>
+              <button onClick={() => copySnippet(curlSnippet)} style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--teal)', fontWeight: 700 }}>
+                <Copy size={11} style={{ display: 'inline', marginRight: 4 }} /> {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
             <pre className="code-block">
-              <span className="c-cyan">curl</span>{' '}
-              -X POST{' '}
-              <span className="c-amber">"{API_BASE_URL}/api/v1/analyze"</span>{' \\'}
-              {'\n'}
-              {'  '}-F{' '}
-              <span className="c-amber">"file=@photo.jpg"</span>
+              <span className="c-cyan">curl</span> -X POST <span className="c-amber">"{API_BASE_URL}/api/v1/analyze"</span> \
+              {'\n'}  -F <span className="c-amber">"file=@photo.jpg"</span>
             </pre>
           </div>
 
           <div>
-            <div className="code-block-header">
-              <span className="code-block-label">JSON Response (v1.1)</span>
+            <div style={{ marginBottom: 8 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>JSON RESPONSE PAYLOAD (v1.1)</span>
             </div>
             <pre className="code-block">
 {`{
@@ -81,22 +76,22 @@ export default function ApiTab() {
         </div>
 
         {/* Endpoint 2 — Batch */}
-        <div className="endpoint-header" style={{ marginTop: 28 }}>
+        <div className="endpoint-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 16, borderBottom: '1px solid rgba(28,36,32,0.1)', marginTop: 28, marginBottom: 20 }}>
           <div>
-            <p className="endpoint-label">POST /api/v1/analyze-batch</p>
-            <p className="endpoint-title">Batch — Up to 5 images, analyzed in parallel</p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'var(--teal)' }}>POST /api/v1/analyze-batch</p>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, color: 'var(--ink)' }}>Batch — Up to 5 images, analyzed in parallel</p>
           </div>
         </div>
         <div>
-          <div className="code-block-header">
-            <span className="code-block-label">cURL (batch)</span>
-            <button className="btn-copy" onClick={() => copySnippet(curlBatch)}>
-              <Copy size={11} /> Copy
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>cURL (BATCH COMMAND)</span>
+            <button onClick={() => copySnippet(curlBatch)} style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--teal)', fontWeight: 700 }}>
+              <Copy size={11} style={{ display: 'inline', marginRight: 4 }} /> Copy
             </button>
           </div>
           <pre className="code-block">
-            <span className="c-cyan">curl</span>{' -X POST '}<span className="c-amber">"{API_BASE_URL}/api/v1/analyze-batch"</span>{' \\\n'}
-            {'  '}-F <span className="c-amber">"files=@img1.jpg"</span>{' -F '}<span className="c-amber">"files=@img2.jpg"</span>
+            <span className="c-cyan">curl</span> -X POST <span className="c-amber">"{API_BASE_URL}/api/v1/analyze-batch"</span> \
+            {'\n'}  -F <span className="c-amber">"files=@img1.jpg"</span> -F <span className="c-amber">"files=@img2.jpg"</span>
           </pre>
         </div>
       </div>
