@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, X, Github, Cpu, Zap, BarChart2 } from 'lucide-react';
+import { ShieldCheck, X, ExternalLink, Cpu, Zap, BarChart2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function AboutModal() {
@@ -69,7 +69,7 @@ export default function AboutModal() {
               rel="noreferrer"
               className="modal-link"
             >
-              <Github size={14} /> View on GitHub
+              <ExternalLink size={14} /> View on GitHub
             </a>
             <a
               href="https://ieeexplore.ieee.org/document/10409290"
