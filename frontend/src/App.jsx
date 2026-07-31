@@ -18,7 +18,6 @@ import UploadCard       from './components/UploadCard';
 import PresetGallery    from './components/PresetGallery';
 import ResultsPanel     from './components/ResultsPanel';
 import AnalyzingState   from './components/AnalyzingState';
-import BatchUpload      from './components/BatchUpload';
 import BatchResults     from './components/BatchResults';
 import AnalysisHistory  from './components/AnalysisHistory';
 
@@ -34,13 +33,13 @@ import AboutModal        from './components/AboutModal';
 import { Eye } from 'lucide-react';
 function EmptyState() {
   return (
-    <div className="card empty-state" style={{ minHeight: 440, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--forest)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+    <div className="card empty-state" style={{ minHeight: 460, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--forest)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, boxShadow: '0 8px 20px rgba(47,77,70,0.25)' }}>
         <Eye size={26} color="var(--cream)" />
       </div>
-      <p style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink)', marginBottom: 6 }}>Ready for Verification</p>
-      <p style={{ color: 'var(--text-dim)', fontSize: 13.5, maxWidth: 360, lineHeight: 1.6 }}>
-        Upload an image or click a preset sample to start authenticity analysis with Grad-CAM++ visual proof and DCT frequency artifact detection.
+      <p style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, color: 'var(--ink)', marginBottom: 8 }}>Ready for Verification</p>
+      <p style={{ color: 'var(--text-dim)', fontSize: 14, maxWidth: 380, lineHeight: 1.6 }}>
+        Upload an image or select a test sample to initiate real-time authenticity verification with Grad-CAM++ thermal proof and DCT frequency signature analysis.
       </p>
     </div>
   );
@@ -51,22 +50,20 @@ function DetectorTab() {
   const { analyzing, result, progress } = useApp();
 
   return (
-    <div className="container page-content" style={{ padding: '32px 0 60px' }}>
+    <div className="container page-content" style={{ padding: '24px 0 60px' }}>
       <HeroSection />
       <ModeTabs />
 
-      <div className="grid-12">
-        {/* Left column */}
+      <div className="grid-12" style={{ alignItems: 'start' }}>
+        {/* Left column — Upload controls & Presets */}
         <div className="col-5" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <UploadCard />
           <PresetGallery />
-          <BatchUpload />
-          <BatchResults />
           <AnalysisHistory />
         </div>
 
-        {/* Right column */}
-        <div className="col-7">
+        {/* Right column — Sticky Verification Panel & Heatmap */}
+        <div className="col-7" style={{ position: 'sticky', top: '88px', alignSelf: 'start', display: 'flex', flexDirection: 'column', gap: 20 }}>
           {analyzing ? (
             <AnalyzingState progress={progress} />
           ) : result ? (
@@ -74,6 +71,7 @@ function DetectorTab() {
           ) : (
             <EmptyState />
           )}
+          <BatchResults />
         </div>
       </div>
     </div>
