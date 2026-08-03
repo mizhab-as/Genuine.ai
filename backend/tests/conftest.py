@@ -2,10 +2,11 @@
 Pytest fixtures for Genuine.ai backend tests.
 """
 import io
-import sys
 import os
-import pytest
+import sys
+
 import numpy as np
+import pytest
 from PIL import Image
 
 # Ensure backend module is on path

@@ -2,9 +2,12 @@
 Unit tests for frequency_analysis.py
 Tests that DCT/FFT features distinguish AI-like from real-like images.
 """
-import pytest
+from frequency_analysis import (
+    compute_dct_features,
+    compute_noise_analysis,
+    run_full_frequency_analysis,
+)
 from PIL import Image
-from frequency_analysis import compute_dct_features, compute_noise_analysis, run_full_frequency_analysis
 
 
 class TestDCTFeatures:

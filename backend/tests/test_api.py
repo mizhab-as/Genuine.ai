@@ -3,12 +3,15 @@ Integration tests for Genuine.ai FastAPI endpoints.
 Tests all 5 API endpoints with valid/invalid inputs.
 """
 import io
-import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+import os
 
 # Use sys.path manipulation for module resolution in tests
-import sys, os
+import sys
+
+import pytest
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from main import app

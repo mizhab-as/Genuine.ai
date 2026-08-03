@@ -3,17 +3,20 @@ Unit tests for gradcam.py
 Tests GradCAM, GradCAMPlusPlus, spatial region analysis, and overlay generation.
 """
 import base64
+
 import numpy as np
 import pytest
-import torch
-from PIL import Image
-
-from cifake_cnn import load_cifake_model, get_image_transforms, GenuineCoreCNN
+from cifake_cnn import get_image_transforms, load_cifake_model
 from gradcam import (
-    GradCAM, GradCAMPlusPlus, pil_to_base64,
-    process_gradcam_overlay, generate_explanation,
-    analyze_spatial_regions, get_dominant_region,
+    GradCAM,
+    GradCAMPlusPlus,
+    analyze_spatial_regions,
+    generate_explanation,
+    get_dominant_region,
+    pil_to_base64,
+    process_gradcam_overlay,
 )
+from PIL import Image
 
 
 @pytest.fixture

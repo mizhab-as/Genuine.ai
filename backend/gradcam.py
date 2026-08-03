@@ -11,15 +11,16 @@ Spatial region analysis classifies which image quadrant triggered activation,
 enabling richer, human-readable explanations.
 """
 
-import io
 import base64
+import io
 import logging
+from typing import Dict, Optional, Tuple
+
+import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-import cv2
 from PIL import Image
-from typing import Optional, Tuple, Dict
 
 logger = logging.getLogger("genuine.gradcam")
 

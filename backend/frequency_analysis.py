@@ -13,12 +13,11 @@ These signals work WITHOUT trained model weights, giving genuine detection
 capability independent of the CNN classifier.
 """
 
-import io
 import numpy as np
 from PIL import Image
 
 try:
-    from scipy.fft import dct, dctn
+    from scipy.fft import dctn
     from scipy.stats import entropy as scipy_entropy
     SCIPY_AVAILABLE = True
 except ImportError:
@@ -57,10 +56,8 @@ def compute_dct_features(pil_img: Image.Image) -> dict:
 
     # Split into low / mid / high frequency bands
     h, w = dct_magnitude.shape
-    low_cutoff_h, low_cutoff_w = h // 8, w // 8
     mid_cutoff_h, mid_cutoff_w = h // 3, w // 3
 
-    low_energy     = np.sum(dct_magnitude[:low_cutoff_h, :low_cutoff_w] ** 2)
     low_mid_energy = np.sum(dct_magnitude[:mid_cutoff_h, :mid_cutoff_w] ** 2)
     high_energy    = total_energy - low_mid_energy
 

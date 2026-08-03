@@ -5,9 +5,10 @@ Typed request / response models for all endpoints.
 """
 
 from __future__ import annotations
-from typing import Optional, List, Literal
-from pydantic import BaseModel, Field, field_validator
 
+from typing import List, Literal, Optional
+
+from pydantic import BaseModel, Field
 
 # ── Shared ────────────────────────────────────────────────────────────────────
 

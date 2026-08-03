@@ -20,32 +20,48 @@ Endpoints:
   POST /api/v1/analyze-batch        — batch (up to 5 images, parallel)
 """
 
+import asyncio
+import hashlib
+import io
+import logging
 import os
 import time
 import uuid
-import io
-import hashlib
-import logging
-import asyncio
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
 import numpy as np
 import torch
-from PIL import Image, ImageDraw
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request
+from cifake_cnn import ModelRegistry, get_image_transforms, load_cifake_model
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-
-from cifake_cnn import load_cifake_model, get_image_transforms, ModelRegistry
-from gradcam import GradCAM, GradCAMPlusPlus, process_gradcam_overlay, generate_explanation, pil_to_base64
 from frequency_analysis import run_full_frequency_analysis
+from gradcam import (
+    GradCAM,
+    GradCAMPlusPlus,
+    generate_explanation,
+    pil_to_base64,
+    process_gradcam_overlay,
+)
+from PIL import Image, ImageDraw
 from schemas import (
-    HealthResponse, ModelsResponse, ModelInfo,
-    AnalysisResponse, FaceAnalysisResponse, DocumentAnalysisResponse,
-    VideoAnalysisResponse, BatchAnalysisResponse, BatchResultItem,
-    FrequencyMetrics, CNNMetrics, FaceMetrics, DocumentMetrics, VideoMetrics,
-    FrameEntry, ErrorResponse, FeedbackRequest, FeedbackResponse,
+    AnalysisResponse,
+    BatchAnalysisResponse,
+    BatchResultItem,
+    CNNMetrics,
+    DocumentAnalysisResponse,
+    DocumentMetrics,
+    FaceAnalysisResponse,
+    FaceMetrics,
+    FeedbackRequest,
+    FeedbackResponse,
+    FrameEntry,
+    FrequencyMetrics,
+    HealthResponse,
+    ModelInfo,
+    ModelsResponse,
+    VideoAnalysisResponse,
+    VideoMetrics,
 )
 
 # ── Logging Setup ─────────────────────────────────────────────────────────────
