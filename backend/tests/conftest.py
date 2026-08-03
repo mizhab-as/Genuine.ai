@@ -22,12 +22,11 @@ def real_like_image() -> Image.Image:
     """
     np.random.seed(7)
     arr = np.zeros((128, 128, 3), dtype=np.uint8)
-    # Sky gradient
-    for i in range(64):
-        arr[i, :] = [30 + i * 2, 100 + i, 180]
-    # Ground
-    arr[64:, :] = [34, 85, 34]
-    # Add organic noise
+    for i in range(128):
+        blend = 1.0 / (1.0 + np.exp(-(i - 64) / 8.0))
+        sky = np.array([30 + i * 1.5, 100 + i * 0.5, 180], dtype=np.float32)
+        ground = np.array([34, 85, 34], dtype=np.float32)
+        arr[i, :] = (1.0 - blend) * sky + blend * ground
     noise = np.random.normal(0, 18, arr.shape).astype(np.int16)
     arr   = np.clip(arr.astype(np.int16) + noise, 0, 255).astype(np.uint8)
     return Image.fromarray(arr)

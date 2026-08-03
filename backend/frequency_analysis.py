@@ -37,12 +37,9 @@ def compute_dct_features(pil_img: Image.Image) -> dict:
 
     Returns:
         high_freq_ratio    - Ratio of energy in high-frequency DCT coefficients.
-                             AI images: typically > 0.35. Real images: typically < 0.25.
-        spectral_entropy   - Shannon entropy of the DCT coefficient magnitude distribution.
-                             AI images: lower entropy (smoother). Real: higher.
-        periodicity_score  - Peak-to-mean ratio of the FFT magnitude spectrum.
-                             AI images: higher (periodic grid). Real: lower.
-        grid_artifact_score- Composite score combining all three signals [0.0–1.0].
+        spectral_entropy   - Shannon entropy of the AC DCT coefficient magnitude distribution.
+        periodicity_score  - High-frequency FFT spectral peak z-score.
+        grid_artifact_score- Composite score combining frequency signals [0.0–1.0].
     """
     gray = _to_grayscale_array(pil_img, size=256)
 
@@ -63,43 +60,51 @@ def compute_dct_features(pil_img: Image.Image) -> dict:
     low_cutoff_h, low_cutoff_w = h // 8, w // 8
     mid_cutoff_h, mid_cutoff_w = h // 3, w // 3
 
-    low_energy = np.sum(dct_magnitude[:low_cutoff_h, :low_cutoff_w] ** 2)
-    mid_energy = np.sum(dct_magnitude[low_cutoff_h:mid_cutoff_h,
-                                       low_cutoff_w:mid_cutoff_w] ** 2)
-    high_energy = total_energy - low_energy - mid_energy
+    low_energy     = np.sum(dct_magnitude[:low_cutoff_h, :low_cutoff_w] ** 2)
+    low_mid_energy = np.sum(dct_magnitude[:mid_cutoff_h, :mid_cutoff_w] ** 2)
+    high_energy    = total_energy - low_mid_energy
 
     high_freq_ratio = float(high_energy / total_energy)
 
-    # ── Spectral Entropy ──────────────────────────────────────────────────────
-    flat = dct_magnitude.flatten()
-    flat_norm = flat / (np.sum(flat) + 1e-10)
-    # Bin into 64 buckets for robust entropy
-    hist, _ = np.histogram(flat_norm, bins=64, range=(0, flat_norm.max() + 1e-10))
-    hist_prob = hist / (hist.sum() + 1e-10)
-    if SCIPY_AVAILABLE:
-        spectral_entropy = float(scipy_entropy(hist_prob + 1e-12))
-    else:
-        spectral_entropy = float(-np.sum(hist_prob * np.log(hist_prob + 1e-12)))
-    # Normalize to [0, 1] (max theoretical entropy for 64 bins ≈ ln(64) ≈ 4.16)
-    spectral_entropy_norm = float(np.clip(spectral_entropy / 4.16, 0.0, 1.0))
+    # ── AC Spectral Entropy ───────────────────────────────────────────────────
+    ac_mag = dct_magnitude.copy()
+    ac_mag[0, 0] = 0.0  # Exclude DC component
+    ac_flat = ac_mag.flatten()
+    ac_norm = ac_flat / (np.sum(ac_flat) + 1e-10)
 
-    # ── FFT Periodicity Analysis ──────────────────────────────────────────────
-    fft_mag = np.abs(np.fft.fft2(gray))
-    fft_shifted = np.fft.fftshift(fft_mag)
-    # Remove DC component (center)
+    nonzero_ac = ac_norm[ac_norm > 1e-8]
+    if len(nonzero_ac) > 0:
+        hist, _ = np.histogram(np.log10(nonzero_ac + 1e-12), bins=32)
+        hist_prob = hist / (hist.sum() + 1e-10)
+        if SCIPY_AVAILABLE:
+            spectral_entropy = float(scipy_entropy(hist_prob + 1e-12))
+        else:
+            spectral_entropy = float(-np.sum(hist_prob * np.log(hist_prob + 1e-12)))
+        # Max theoretical entropy for 32 bins is ln(32) ≈ 3.4657
+        spectral_entropy_norm = float(np.clip(spectral_entropy / 3.4657, 0.0, 1.0))
+    else:
+        spectral_entropy_norm = 0.5
+
+    # ── FFT Periodicity / Grid Analysis ───────────────────────────────────────
+    fft_mag = np.abs(np.fft.fftshift(np.fft.fft2(gray)))
     cy, cx = h // 2, w // 2
-    fft_shifted[cy - 4:cy + 4, cx - 4:cx + 4] = 0
-    peak = float(np.max(fft_shifted))
-    mean_excl_dc = float(np.mean(fft_shifted))
-    periodicity_score = float(np.clip(peak / (mean_excl_dc * 30 + 1e-10), 0.0, 1.0))
+    # Exclude central low-frequency region
+    high_freq_fft = fft_mag.copy()
+    high_freq_fft[cy - 32:cy + 32, cx - 32:cx + 32] = 0.0
+
+    fft_max    = float(np.max(high_freq_fft))
+    fft_median = float(np.median(high_freq_fft))
+    fft_std    = float(np.std(high_freq_fft)) + 1e-10
+    z_peak     = (fft_max - fft_median) / fft_std
+
+    # z_peak < 8 is natural noise; z_peak > 15-30 indicates periodic grid artifacts
+    periodicity_score = float(np.clip((z_peak - 8.0) / 25.0, 0.0, 1.0))
 
     # ── Grid Artifact Score (Composite) ───────────────────────────────────────
-    # AI images → high high_freq_ratio, low spectral_entropy, high periodicity
-    # Weights tuned empirically against CIFAKE-style pairs
     grid_artifact_score = float(np.clip(
-        0.45 * high_freq_ratio / 0.5          # normalized contribution
-        + 0.30 * (1.0 - spectral_entropy_norm) # low entropy → AI
-        + 0.25 * periodicity_score,
+        0.60 * periodicity_score
+        + 0.25 * min(high_freq_ratio / 0.015, 1.0)
+        + 0.15 * (1.0 - spectral_entropy_norm),
         0.0, 1.0
     ))
 
@@ -125,13 +130,10 @@ def compute_noise_analysis(pil_img: Image.Image) -> dict:
     """
     gray = _to_grayscale_array(pil_img, size=128)
 
-    # ── High-pass residual via simple difference filter ───────────────────────
+    # ── High-pass residual via difference filter ──────────────────────────────
     padded = np.pad(gray, 1, mode="reflect")
     h, w = gray.shape
-    residual = np.zeros_like(gray)
-    for dy, dx in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-        residual += padded[1 + dy: 1 + dy + h, 1 + dx: 1 + dx + w]
-    residual = gray - residual / 4.0
+    residual = gray - (padded[:-2, 1:-1] + padded[2:, 1:-1] + padded[1:-1, :-2] + padded[1:-1, 2:]) / 4.0
     noise_variance = float(np.var(residual))
 
     # ── Laplacian sharpness ───────────────────────────────────────────────────
@@ -144,7 +146,6 @@ def compute_noise_analysis(pil_img: Image.Image) -> dict:
     laplacian_score = float(np.mean(np.abs(lap_out)))
 
     # ── Local standard deviation uniformity ──────────────────────────────────
-    # Split into 4x4 blocks and measure STD within each block
     block_size = h // 4
     local_stds = []
     for i in range(4):
@@ -152,7 +153,6 @@ def compute_noise_analysis(pil_img: Image.Image) -> dict:
             block = gray[i * block_size:(i + 1) * block_size,
                          j * block_size:(j + 1) * block_size]
             local_stds.append(float(np.std(block)))
-    # Coefficient of variation: low CV → uniform STD across blocks → AI-like
     stds_arr = np.array(local_stds) + 1e-6
     cv = float(np.std(stds_arr) / np.mean(stds_arr))
     local_std_uniformity = float(np.clip(1.0 - cv, 0.0, 1.0))
@@ -169,15 +169,20 @@ def run_full_frequency_analysis(pil_img: Image.Image) -> dict:
     Runs the complete frequency analysis pipeline on a PIL image.
     Returns a merged dict of all frequency and noise metrics.
     """
-    dct_feats  = compute_dct_features(pil_img)
+    dct_feats   = compute_dct_features(pil_img)
     noise_feats = compute_noise_analysis(pil_img)
 
+    # ── Noise AI Artifact Score ──────────────────────────────────────────────
+    # Low noise variance + high spatial uniformity → AI-generated
+    noise_ai_score = float(np.clip(
+        0.60 * (1.0 - min(noise_feats["noise_variance"] / 20.0, 1.0))
+        + 0.40 * noise_feats["local_std_uniformity"],
+        0.0, 1.0
+    ))
+
     # ── Combined Frequency Verdict Score ─────────────────────────────────────
-    # Score in [0, 1] — higher means more likely AI-generated
     freq_ai_score = float(np.clip(
-        0.60 * dct_feats["grid_artifact_score"]
-        + 0.25 * noise_feats["local_std_uniformity"]
-        + 0.15 * (1.0 - min(noise_feats["noise_variance"] / 200.0, 1.0)),
+        0.55 * dct_feats["grid_artifact_score"] + 0.45 * noise_ai_score,
         0.0, 1.0
     ))
 

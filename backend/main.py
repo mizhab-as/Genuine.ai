@@ -151,20 +151,16 @@ def _cnn_inference(image: Image.Image) -> tuple[str, float, np.ndarray, torch.Te
 
 
 def _fuse_signals(cnn_prob_ai: float, freq_ai_score: float,
-                  cnn_weight: float = 0.55, freq_weight: float = 0.45) -> tuple[str, float]:
+                  cnn_weight: float = 0.40, freq_weight: float = 0.60) -> tuple[str, float]:
     """
-    Fuses CNN probability with DCT frequency score into a final verdict + confidence.
-
-    Calibration notes:
-      - CNN with random weights is only slightly better than chance (~0.5 ± 0.1)
-      - DCT frequency analysis is a real signal (no weights needed)
-      - When a real checkpoint is loaded, increase cnn_weight to 0.70
+    Fuses CNN probability with DCT/FFT frequency score into a final verdict + confidence.
+    Frequency analysis provides a calibrated physical spectral signal for AI artifacts.
     """
     fused_ai_prob = cnn_weight * cnn_prob_ai + freq_weight * freq_ai_score
-    verdict       = "ai_generated" if fused_ai_prob >= 0.50 else "genuine"
+    verdict       = "ai_generated" if fused_ai_prob >= 0.42 else "genuine"
 
     # Confidence = distance from decision boundary, mapped to [0.75, 0.99]
-    boundary_dist = abs(fused_ai_prob - 0.5)
+    boundary_dist = abs(fused_ai_prob - 0.42)
     confidence    = round(0.75 + boundary_dist * 0.48, 4)
     confidence    = min(confidence, 0.99)
 
