@@ -24,6 +24,7 @@ import os
 import time
 import uuid
 import io
+import hashlib
 import logging
 import asyncio
 from contextlib import asynccontextmanager
@@ -44,7 +45,7 @@ from schemas import (
     AnalysisResponse, FaceAnalysisResponse, DocumentAnalysisResponse,
     VideoAnalysisResponse, BatchAnalysisResponse, BatchResultItem,
     FrequencyMetrics, CNNMetrics, FaceMetrics, DocumentMetrics, VideoMetrics,
-    FrameEntry, ErrorResponse,
+    FrameEntry, ErrorResponse, FeedbackRequest, FeedbackResponse,
 )
 
 # ── Logging Setup ─────────────────────────────────────────────────────────────
@@ -119,8 +120,8 @@ def _new_request_id() -> str:
     return f"req_{uuid.uuid4().hex[:12]}"
 
 
-async def _read_image(file: UploadFile, request_id: str) -> Image.Image:
-    """Validates and reads an uploaded image file."""
+async def _read_image(file: UploadFile, request_id: str) -> tuple[Image.Image, str]:
+    """Validates and reads an uploaded image file, returning (Image, sha256_hex)."""
     if not (file.content_type or "").startswith("image/"):
         raise HTTPException(
             status_code=400,
@@ -129,8 +130,10 @@ async def _read_image(file: UploadFile, request_id: str) -> Image.Image:
     contents = await file.read()
     if len(contents) > 25 * 1024 * 1024:
         raise HTTPException(status_code=413, detail=f"[{request_id}] File too large (max 25 MB).")
+    sha256_hex = hashlib.sha256(contents).hexdigest()
     try:
-        return Image.open(io.BytesIO(contents)).convert("RGB")
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+        return img, sha256_hex
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"[{request_id}] Could not parse image: {exc}")
 
@@ -201,7 +204,7 @@ async def analyze_image(
     start      = time.time()
     logger.info(f"[{request_id}] /analyze — file={file.filename} preset={preset_id}")
 
-    image       = await _read_image(file, request_id)
+    image, file_sha256 = await _read_image(file, request_id)
     original_b64 = pil_to_base64(image)
 
     # ── Signal 1: CNN ─────────────────────────────────────────────────────────
@@ -239,6 +242,7 @@ async def analyze_image(
 
     return AnalysisResponse(
         request_id           =request_id,
+        file_sha256          =file_sha256,
         verdict              =verdict,
         confidence           =confidence,
         confidence_percentage=f"{int(confidence * 100)}%",
@@ -250,8 +254,8 @@ async def analyze_image(
         analysis_time_ms     =elapsed_ms,
         frequency_analysis   =FrequencyMetrics(**freq_stats),
         metrics              =cnn_metrics,
-        cnn_weight           =0.55,
-        freq_weight          =0.45,
+        cnn_weight           =0.40,
+        freq_weight          =0.60,
     )
 
 
@@ -265,12 +269,12 @@ async def analyze_face(
     start      = time.time()
     logger.info(f"[{request_id}] /analyze-face — file={file.filename}")
 
-    image        = await _read_image(file, request_id)
+    image, file_sha256 = await _read_image(file, request_id)
     original_b64 = pil_to_base64(image)
 
     cnn_verdict, cnn_prob_ai, heatmap_np, _ = _cnn_inference(image)
     freq_stats    = run_full_frequency_analysis(image)
-    verdict, confidence = _fuse_signals(cnn_prob_ai, freq_stats["freq_ai_score"], 0.50, 0.50)
+    verdict, confidence = _fuse_signals(cnn_prob_ai, freq_stats["freq_ai_score"])
 
     if preset_id == "ai_portrait":
         verdict, confidence = "ai_generated", round(max(confidence, 0.90), 4)
@@ -291,6 +295,7 @@ async def analyze_face(
 
     return FaceAnalysisResponse(
         request_id           =request_id,
+        file_sha256          =file_sha256,
         verdict              =verdict,
         confidence           =confidence,
         confidence_percentage=f"{int(confidence * 100)}%",
@@ -323,12 +328,12 @@ async def analyze_document(
     start      = time.time()
     logger.info(f"[{request_id}] /analyze-document — file={file.filename}")
 
-    image        = await _read_image(file, request_id)
+    image, file_sha256 = await _read_image(file, request_id)
     original_b64 = pil_to_base64(image)
 
     _, cnn_prob_ai, heatmap_np, _ = _cnn_inference(image)
     freq_stats       = run_full_frequency_analysis(image)
-    verdict, confidence = _fuse_signals(cnn_prob_ai, freq_stats["freq_ai_score"], 0.40, 0.60)
+    verdict, confidence = _fuse_signals(cnn_prob_ai, freq_stats["freq_ai_score"])
 
     # For documents, the frequency signal is more reliable (pen stroke periodicity)
     if preset_id == "ai_portrait":
@@ -341,6 +346,7 @@ async def analyze_document(
 
     return DocumentAnalysisResponse(
         request_id           =request_id,
+        file_sha256          =file_sha256,
         verdict              =verdict,
         confidence           =confidence,
         confidence_percentage=f"{int(confidence * 100)}%",
@@ -370,7 +376,7 @@ async def analyze_video(
     start      = time.time()
     logger.info(f"[{request_id}] /analyze-video — file={file.filename}")
 
-    image        = await _read_image(file, request_id)
+    image, file_sha256 = await _read_image(file, request_id)
     original_b64 = pil_to_base64(image)
 
     _, cnn_prob_ai, heatmap_np, _ = _cnn_inference(image)
@@ -404,6 +410,7 @@ async def analyze_video(
 
     return VideoAnalysisResponse(
         request_id           =request_id,
+        file_sha256          =file_sha256,
         verdict              =verdict,
         confidence           =confidence,
         confidence_percentage=f"{int(confidence * 100)}%",
@@ -447,7 +454,7 @@ async def analyze_batch(
     async def _process_one(idx: int, f: UploadFile) -> BatchResultItem:
         t0 = time.time()
         try:
-            img         = await _read_image(f, f"{request_id}-{idx}")
+            img, _      = await _read_image(f, f"{request_id}-{idx}")
             _, cnn_prob, _, _ = _cnn_inference(img)
             freq        = run_full_frequency_analysis(img)
             verdict, conf = _fuse_signals(cnn_prob, freq["freq_ai_score"])
@@ -496,4 +503,17 @@ async def analyze_batch(
         avg_confidence=avg_conf,
         results      =list(results),
         total_time_ms=total_ms,
+    )
+
+
+@app.post("/api/v1/feedback", response_model=FeedbackResponse)
+async def submit_feedback(payload: FeedbackRequest):
+    """
+    Human-in-the-Loop Feedback — logs false positive / false negative reports.
+    """
+    logger.info(f"[{payload.request_id}] Feedback received: user_verdict={payload.user_verdict} type={payload.feedback_type}")
+    return FeedbackResponse(
+        status="received",
+        request_id=payload.request_id,
+        logged_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     )

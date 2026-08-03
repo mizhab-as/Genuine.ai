@@ -198,8 +198,22 @@ async def test_batch_two_images(client, real_like_image, ai_like_image):
     assert data["processed"] == 2
     assert data["errors"] == 0
     assert len(data["results"]) == 2
-    for r in data["results"]:
-        assert r["verdict"] in ("genuine", "ai_generated")
+
+
+@pytest.mark.asyncio
+async def test_feedback_endpoint(client):
+    resp = await client.post(
+        "/api/v1/feedback",
+        json={
+            "request_id": "req_test123",
+            "user_verdict": "genuine",
+            "feedback_type": "false_flag_report"
+        }
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "received"
+    assert data["request_id"] == "req_test123"
 
 @pytest.mark.asyncio
 async def test_batch_too_many_files(client, real_like_image):

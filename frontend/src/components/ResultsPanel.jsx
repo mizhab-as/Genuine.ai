@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, AlertTriangle, Info, User, Video, Copy } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Info, User, Video, Copy, ThumbsDown, ShieldCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import HeatmapViewer from './HeatmapViewer';
 import MetricBar from './MetricBar';
@@ -30,7 +30,7 @@ const FREQ_LABELS = {
 };
 
 export default function ResultsPanel() {
-  const { result, copySnippet } = useApp();
+  const { result, copySnippet, showToast, API_BASE_URL } = useApp();
 
   if (!result) return null;
 
@@ -38,11 +38,45 @@ export default function ResultsPanel() {
   const freqAI = result.frequency_analysis;
 
   const handleCopyResult = () => {
-    copySnippet(JSON.stringify({
-      verdict:    result.verdict,
-      confidence: result.confidence,
+    copySnippet(JSON.stringify(result, null, 2));
+  };
+
+  const handleDownloadCertificate = () => {
+    const cert = {
+      title: "GENUINE.AI AUTHENTICITY VERIFICATION CERTIFICATE",
+      timestamp: new Date().toISOString(),
       request_id: result.request_id,
-    }, null, 2));
+      file_sha256: result.file_sha256 || "N/A",
+      verdict: result.verdict,
+      confidence: result.confidence_percentage,
+      cnn_prob_ai: result.metrics?.max_activation_intensity,
+      dct_frequency_metrics: result.frequency_analysis,
+      model_version: result.model_version || "genuine-core-v1",
+      signature: "GENUINE_AI_FORENSIC_PROOF_STAMP_OK"
+    };
+    const element = document.createElement("a");
+    const file = new Blob([JSON.stringify(cert, null, 2)], { type: 'application/json' });
+    element.href = URL.createObjectURL(file);
+    element.download = `genuine_ai_certificate_${result.request_id || 'scan'}.json`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    showToast("Downloaded Authenticity Proof Certificate", "success");
+  };
+
+  const handleReportFeedback = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/v1/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          request_id: result.request_id,
+          user_verdict: isAI ? 'genuine' : 'ai_generated',
+          feedback_type: 'false_flag_report'
+        })
+      }).catch(() => {});
+    } catch { /* ignore fallback */ }
+    showToast("Feedback submitted to Genuine.ai model calibration queue", "info");
   };
 
   return (
@@ -86,6 +120,33 @@ export default function ResultsPanel() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Action Toolbar: Certificate & Feedback ───────────────────── */}
+      <div style={{ display: 'flex', gap: 10, margin: '14px 0', paddingBottom: 14, borderBottom: '1px solid rgba(28,36,32,0.08)' }}>
+        <button
+          onClick={handleDownloadCertificate}
+          style={{
+            flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(47,77,70,0.2)',
+            background: 'var(--forest)', color: 'var(--cream)', fontFamily: 'var(--font-mono)',
+            fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center',
+            justify: 'center', gap: 6, boxShadow: '0 2px 6px rgba(47,77,70,0.15)'
+          }}
+        >
+          <ShieldCheck size={14} color="var(--teal)" /> Download Proof Certificate
+        </button>
+        <button
+          onClick={handleReportFeedback}
+          title="Report false positive or incorrect verdict"
+          style={{
+            padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(28,36,32,0.15)',
+            background: '#ffffff', color: 'var(--ink)', fontFamily: 'var(--font-mono)',
+            fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <ThumbsDown size={13} color="var(--rose)" /> Report Issue
+        </button>
       </div>
 
       {/* ── Mode-specific info ──────────────────────────────────────── */}

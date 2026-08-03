@@ -90,6 +90,7 @@ class ModelsResponse(BaseModel):
 
 class AnalysisResponse(BaseModel):
     request_id:             str
+    file_sha256:            Optional[str] = None
     verdict:                Literal["genuine", "ai_generated"]
     confidence:             float = Field(..., ge=0.0, le=1.0)
     confidence_percentage:  str
@@ -102,12 +103,13 @@ class AnalysisResponse(BaseModel):
     frequency_analysis:     FrequencyMetrics
     metrics:                CNNMetrics
     # Fusion: how much each signal contributed
-    cnn_weight:             float = Field(default=0.5, ge=0.0, le=1.0)
-    freq_weight:            float = Field(default=0.5, ge=0.0, le=1.0)
+    cnn_weight:             float = Field(default=0.4, ge=0.0, le=1.0)
+    freq_weight:            float = Field(default=0.6, ge=0.0, le=1.0)
 
 
 class FaceAnalysisResponse(BaseModel):
     request_id:            str
+    file_sha256:           Optional[str] = None
     verdict:               Literal["genuine", "ai_generated"]
     confidence:            float
     confidence_percentage: str
@@ -127,6 +129,7 @@ class FaceAnalysisResponse(BaseModel):
 
 class DocumentAnalysisResponse(BaseModel):
     request_id:            str
+    file_sha256:           Optional[str] = None
     verdict:               Literal["genuine", "ai_generated"]
     confidence:            float
     confidence_percentage: str
@@ -143,6 +146,7 @@ class DocumentAnalysisResponse(BaseModel):
 
 class VideoAnalysisResponse(BaseModel):
     request_id:            str
+    file_sha256:           Optional[str] = None
     verdict:               Literal["genuine", "ai_generated"]
     confidence:            float
     confidence_percentage: str
@@ -182,6 +186,21 @@ class BatchAnalysisResponse(BaseModel):
     avg_confidence:    float
     results:           List[BatchResultItem]
     total_time_ms:     float
+
+
+# ── Feedback ──────────────────────────────────────────────────────────────────
+
+class FeedbackRequest(BaseModel):
+    request_id:    str
+    user_verdict:  Literal["genuine", "ai_generated"]
+    feedback_type: Optional[str] = Field(default="false_flag_report")
+    notes:         Optional[str] = None
+
+
+class FeedbackResponse(BaseModel):
+    status:        Literal["received"]
+    request_id:    str
+    logged_at:     str
 
 
 # ── Error ──────────────────────────────────────────────────────────────────────

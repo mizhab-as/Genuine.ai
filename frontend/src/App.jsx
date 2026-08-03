@@ -11,9 +11,8 @@ import { AppProvider, useApp } from './context/AppContext';
 // Layout & Navigation
 import Navbar           from './components/Navbar';
 import HeroSection      from './components/HeroSection';
-import ModeTabs         from './components/ModeTabs';
 
-// Detector tab
+// Detector components
 import UploadCard       from './components/UploadCard';
 import PresetGallery    from './components/PresetGallery';
 import ResultsPanel     from './components/ResultsPanel';
@@ -21,11 +20,8 @@ import AnalyzingState   from './components/AnalyzingState';
 import BatchResults     from './components/BatchResults';
 import AnalysisHistory  from './components/AnalysisHistory';
 
-// Other tabs
-import ApiTab           from './components/ApiTab';
-import DocsTab          from './components/DocsTab';
-
-// Global overlays
+// Global overlays & drawer
+import DeveloperDrawer  from './components/DeveloperDrawer';
 import ToastNotification from './components/ToastNotification';
 import AboutModal        from './components/AboutModal';
 
@@ -33,37 +29,36 @@ import AboutModal        from './components/AboutModal';
 import { Eye } from 'lucide-react';
 function EmptyState() {
   return (
-    <div className="card empty-state" style={{ minHeight: 460, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--forest)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, boxShadow: '0 8px 20px rgba(47,77,70,0.25)' }}>
-        <Eye size={26} color="var(--cream)" />
+    <div className="card empty-state" style={{ minHeight: 440, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+      <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--forest)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, boxShadow: '0 8px 20px rgba(47,77,70,0.25)' }}>
+        <Eye size={24} color="var(--cream)" />
       </div>
-      <p style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, color: 'var(--ink)', marginBottom: 8 }}>Ready for Verification</p>
-      <p style={{ color: 'var(--text-dim)', fontSize: 14, maxWidth: 380, lineHeight: 1.6 }}>
-        Upload an image or select a test sample to initiate real-time authenticity verification with Grad-CAM++ thermal proof and DCT frequency signature analysis.
+      <p style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, color: 'var(--ink)', marginBottom: 8 }}>Ready for Verification</p>
+      <p style={{ color: 'var(--text-dim)', fontSize: 13.5, maxWidth: 380, lineHeight: 1.6 }}>
+        Upload an image or select a test sample to initiate real-time authenticity verification with Grad-CAM++ thermal proof and off-axis FFT/DCT frequency analysis.
       </p>
     </div>
   );
 }
 
-// ── Detector Tab ───────────────────────────────────────────────────────────────
+// ── Detector Studio ────────────────────────────────────────────────────────────
 function DetectorTab() {
   const { analyzing, result, progress } = useApp();
 
   return (
-    <div className="container page-content" style={{ padding: '24px 0 60px' }}>
+    <div className="container page-content" style={{ padding: '16px 0 48px' }}>
       <HeroSection />
-      <ModeTabs />
 
-      <div className="grid-12" style={{ alignItems: 'start' }}>
-        {/* Left column — Upload controls & Presets */}
-        <div className="col-5" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="grid-12" style={{ alignItems: 'start', marginTop: 16 }}>
+        {/* Left column — Upload controls, Presets & History */}
+        <div className="col-5" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <UploadCard />
           <PresetGallery />
           <AnalysisHistory />
         </div>
 
         {/* Right column — Sticky Verification Panel & Heatmap */}
-        <div className="col-7" style={{ position: 'sticky', top: '88px', alignSelf: 'start', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className="col-7" style={{ position: 'sticky', top: '80px', alignSelf: 'start', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {analyzing ? (
             <AnalyzingState progress={progress} />
           ) : result ? (
@@ -80,17 +75,15 @@ function DetectorTab() {
 
 // ── App Root ──────────────────────────────────────────────────────────────────
 function AppShell() {
-  const { tab, toast } = useApp();
+  const { toast } = useApp();
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Navbar />
 
-      {tab === 'detector' && <DetectorTab />}
-      {tab === 'api'      && <ApiTab />}
-      {tab === 'docs'     && <DocsTab />}
+      <DetectorTab />
 
-      {/* Footer from genuine_ai_landing.html */}
+      {/* Footer */}
       <footer className="footer">
         <div className="footer-inner">
           <div>
@@ -104,6 +97,7 @@ function AppShell() {
       </footer>
 
       {/* Global overlays */}
+      <DeveloperDrawer />
       <ToastNotification toast={toast} />
       <AboutModal />
     </div>

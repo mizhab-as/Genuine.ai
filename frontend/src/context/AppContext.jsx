@@ -27,6 +27,7 @@ export function AppProvider({ children }) {
   const [batchResults,    setBatchResults]  = useState(null);
   const [aboutOpen,       setAboutOpen]     = useState(false);
   const [compareMode,     setCompareMode]   = useState(false);
+  const [drawerOpen,      setDrawerOpen]    = useState(false);
   const [copied,          setCopied]        = useState(false);
   const fileInputRef = useRef(null);
 
@@ -161,7 +162,7 @@ export function AppProvider({ children }) {
     analyzing, progress, result, setResult, error, setError,
     viewMode, setViewMode, opacity, setOpacity,
     apiOnline, history, toast, batchResults, setBatchResults,
-    aboutOpen, setAboutOpen, compareMode, setCompareMode, copied,
+    aboutOpen, setAboutOpen, compareMode, setCompareMode, drawerOpen, setDrawerOpen, copied,
     fileInputRef,
     // Actions
     clearAll, onFileSelect, onDrop, runAnalysis, loadPreset, copySnippet, showToast,
