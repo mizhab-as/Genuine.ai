@@ -68,18 +68,22 @@ gradcampp_engine = None
 image_transforms = None
 
 
+def _ensure_model_loaded():
+    global model, gradcam_engine, gradcampp_engine, image_transforms
+    if model is None or gradcampp_engine is None or image_transforms is None:
+        logger.info("Initializing Genuine Core v1 CNN Model Engine…")
+        model            = load_cifake_model(use_temperature_scaling=True)
+        base             = model.base_model if hasattr(model, "base_model") else model
+        gradcam_engine   = GradCAM(model, base.conv2)
+        gradcampp_engine = GradCAMPlusPlus(model, base.conv2)
+        image_transforms = get_image_transforms()
+        logger.info("Genuine Core v1 initialized. Temperature scaling enabled (T=1.5).")
+
+
 # ── Lifespan (FastAPI v0.100+ best practice) ──────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global model, gradcam_engine, gradcampp_engine, image_transforms
-    logger.info("Initializing Genuine Core v1 CNN Model Engine…")
-    model            = load_cifake_model(use_temperature_scaling=True)
-    # Grad-CAM hooks onto the base conv2 layer (unwrap TemperatureScaling)
-    base             = model.base_model if hasattr(model, "base_model") else model
-    gradcam_engine   = GradCAM(model, base.conv2)
-    gradcampp_engine = GradCAMPlusPlus(model, base.conv2)
-    image_transforms = get_image_transforms()
-    logger.info("Genuine Core v1 initialized. Temperature scaling enabled (T=1.5).")
+    _ensure_model_loaded()
     yield
     logger.info("Genuine.ai API shutting down.")
 
@@ -136,6 +140,7 @@ def _cnn_inference(image: Image.Image) -> tuple[str, float, np.ndarray, torch.Te
     Runs CNN + Grad-CAM++ inference on a PIL image.
     Returns: (raw_verdict, raw_prob_ai, heatmap_np, logits)
     """
+    _ensure_model_loaded()
     input_tensor = image_transforms(image).unsqueeze(0)
     input_tensor.requires_grad_(True)
     heatmap_np, target_class, logits = gradcampp_engine.generate_heatmap(input_tensor)

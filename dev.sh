@@ -157,6 +157,7 @@ if [ "$MODE" = "test" ]; then
   python -m pytest \
     backend/tests/test_frequency_analysis.py \
     backend/tests/test_gradcam.py \
+    backend/tests/test_api.py \
     -v --tb=short --asyncio-mode=auto \
     2>&1
 
